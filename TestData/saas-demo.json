@@ -1,0 +1,51 @@
+{
+  "scenario": "SaaS Platform",
+  "description": "Sample events from a fictional project management SaaS called LaunchPad. Includes auth events, billing, errors, feature usage, and onboarding over 10 days.",
+  "project": {
+    "name": "LaunchPad"
+  },
+  "insights": [
+    { "title": "Monthly Revenue", "value": "$12,450", "icon": "💰" },
+    { "title": "Active Teams", "value": "342", "icon": "👥" },
+    { "title": "Error Rate", "value": "0.3%", "icon": "🔴" },
+    { "title": "Uptime", "value": "99.97%", "icon": "🟢" }
+  ],
+  "events": [
+    { "channel": "auth", "title": "User Login", "description": "alice@acme.co logged in from Chrome/Mac", "icon": "🔑", "tags": { "user": "alice@acme.co", "method": "password" }, "minutes_ago": 14400 },
+    { "channel": "billing", "title": "Subscription Started", "description": "Acme Corp upgraded to Pro plan — $49/month", "icon": "💳", "tags": { "plan": "pro", "amount": 49, "interval": "monthly" }, "minutes_ago": 14200 },
+    { "channel": "onboarding", "title": "Team Created", "description": "Acme Corp created team with 5 members", "icon": "🏢", "tags": { "team": "Acme Corp", "members": 5 }, "minutes_ago": 14000 },
+    { "channel": "features", "title": "Feature Used: Kanban Board", "description": "alice@acme.co created board \"Q2 Roadmap\"", "icon": "📋", "tags": { "feature": "kanban", "action": "create" }, "minutes_ago": 13800 },
+    { "channel": "auth", "title": "User Login", "description": "bob@startup.io logged in from Firefox/Linux", "icon": "🔑", "tags": { "user": "bob@startup.io", "method": "google_oauth" }, "minutes_ago": 13500 },
+    { "channel": "errors", "title": "Server Error (500)", "description": "DatabaseError in ProjectService — connection timeout", "icon": "🔴", "tags": { "severity": "critical", "service": "ProjectService" }, "minutes_ago": 13000 },
+    { "channel": "errors", "title": "Error Resolved", "description": "DatabaseError resolved — connection pool increased", "icon": "🟢", "tags": { "severity": "resolved", "fix": "pool_size" }, "minutes_ago": 12800 },
+    { "channel": "billing", "title": "Payment Received", "description": "$49.00 from Acme Corp — Pro monthly", "icon": "💰", "tags": { "amount": 49, "team": "Acme Corp" }, "minutes_ago": 12500 },
+    { "channel": "features", "title": "Feature Used: File Upload", "description": "carol@design.co uploaded design-v3.fig (4.2 MB)", "icon": "📎", "tags": { "feature": "file_upload", "size_mb": 4.2 }, "minutes_ago": 12000 },
+    { "channel": "auth", "title": "Failed Login Attempt", "description": "unknown@test.com — wrong password (3rd attempt)", "icon": "⚠️", "tags": { "user": "unknown@test.com", "attempts": 3 }, "minutes_ago": 11500 },
+    { "channel": "onboarding", "title": "Onboarding Completed", "description": "Acme Corp completed all setup steps", "icon": "✅", "tags": { "team": "Acme Corp", "steps_completed": 5 }, "minutes_ago": 10800 },
+    { "channel": "billing", "title": "Subscription Started", "description": "DesignStudio signed up for Starter plan — $19/month", "icon": "💳", "tags": { "plan": "starter", "amount": 19, "interval": "monthly" }, "minutes_ago": 10500 },
+    { "channel": "features", "title": "Feature Used: Time Tracking", "description": "dan@acme.co logged 3.5 hours on \"API Integration\"", "icon": "⏱️", "tags": { "feature": "time_tracking", "hours": 3.5 }, "minutes_ago": 10000 },
+    { "channel": "auth", "title": "User Invited", "description": "alice@acme.co invited eve@acme.co to team", "icon": "📨", "tags": { "inviter": "alice@acme.co", "invitee": "eve@acme.co" }, "minutes_ago": 8640 },
+    { "channel": "features", "title": "Feature Used: API Access", "description": "bob@startup.io generated API key for CI integration", "icon": "🔌", "tags": { "feature": "api_access", "action": "key_generated" }, "minutes_ago": 8400 },
+    { "channel": "errors", "title": "Rate Limit Hit", "description": "startup.io exceeded 1000 req/min API limit", "icon": "🚫", "tags": { "severity": "warning", "team": "startup.io", "limit": 1000 }, "minutes_ago": 7200 },
+    { "channel": "billing", "title": "Subscription Upgraded", "description": "startup.io upgraded from Starter to Pro — $49/month", "icon": "⬆️", "tags": { "plan": "pro", "previous": "starter", "amount": 49 }, "minutes_ago": 7000 },
+    { "channel": "auth", "title": "Password Reset", "description": "frank@agency.com requested password reset", "icon": "🔒", "tags": { "user": "frank@agency.com" }, "minutes_ago": 5760 },
+    { "channel": "features", "title": "Feature Used: Team Settings", "description": "alice@acme.co enabled two-factor auth for team", "icon": "🛡️", "tags": { "feature": "team_settings", "action": "enable_2fa" }, "minutes_ago": 5500 },
+    { "channel": "onboarding", "title": "Team Created", "description": "CodeCraft Studio created team with 3 members", "icon": "🏢", "tags": { "team": "CodeCraft Studio", "members": 3 }, "minutes_ago": 5000 },
+    { "channel": "errors", "title": "Client Error (422)", "description": "Validation failed: project name exceeds 100 chars", "icon": "⚠️", "tags": { "severity": "low", "field": "name" }, "minutes_ago": 4320 },
+    { "channel": "billing", "title": "Payment Failed", "description": "CodeCraft Studio — card declined (expired)", "icon": "❌", "tags": { "team": "CodeCraft Studio", "reason": "card_expired" }, "minutes_ago": 4200 },
+    { "channel": "billing", "title": "Payment Retry Succeeded", "description": "CodeCraft Studio — $19.00 charged to updated card", "icon": "✅", "tags": { "team": "CodeCraft Studio", "amount": 19 }, "minutes_ago": 4000 },
+    { "channel": "features", "title": "Feature Used: Export", "description": "bob@startup.io exported project data as CSV", "icon": "📤", "tags": { "feature": "export", "format": "csv" }, "minutes_ago": 2880 },
+    { "channel": "auth", "title": "User Login", "description": "grace@codecraft.dev logged in via Google OAuth", "icon": "🔑", "tags": { "user": "grace@codecraft.dev", "method": "google_oauth" }, "minutes_ago": 2500 },
+    { "channel": "features", "title": "Feature Used: Kanban Board", "description": "grace@codecraft.dev moved 4 tasks to Done", "icon": "📋", "tags": { "feature": "kanban", "action": "move_tasks", "count": 4 }, "minutes_ago": 2400 },
+    { "channel": "errors", "title": "Server Error (503)", "description": "Service unavailable — deployment in progress", "icon": "🔴", "tags": { "severity": "high", "cause": "deployment" }, "minutes_ago": 1440 },
+    { "channel": "errors", "title": "Service Restored", "description": "All systems operational — deployment completed", "icon": "🟢", "tags": { "severity": "resolved", "downtime_min": 3 }, "minutes_ago": 1437 },
+    { "channel": "billing", "title": "Subscription Cancelled", "description": "TinyApps cancelled Starter plan — reason: switching tools", "icon": "👋", "tags": { "team": "TinyApps", "reason": "switching_tools" }, "minutes_ago": 1200 },
+    { "channel": "auth", "title": "User Login", "description": "alice@acme.co logged in from Safari/iPhone", "icon": "🔑", "tags": { "user": "alice@acme.co", "method": "password", "device": "mobile" }, "minutes_ago": 720 },
+    { "channel": "features", "title": "Feature Used: Comments", "description": "dan@acme.co added 3 comments on \"Q2 Roadmap\"", "icon": "💬", "tags": { "feature": "comments", "count": 3 }, "minutes_ago": 480 },
+    { "channel": "onboarding", "title": "First Project Created", "description": "CodeCraft Studio created project \"Client Portal\"", "icon": "🚀", "tags": { "team": "CodeCraft Studio", "project": "Client Portal" }, "minutes_ago": 360 },
+    { "channel": "billing", "title": "Payment Received", "description": "$99.00 from startup.io — Pro annual", "icon": "💰", "tags": { "amount": 99, "team": "startup.io", "interval": "annual" }, "minutes_ago": 240 },
+    { "channel": "auth", "title": "New User Signup", "description": "henry@freelance.me signed up via invite link", "icon": "👤", "tags": { "user": "henry@freelance.me", "source": "invite" }, "minutes_ago": 120 },
+    { "channel": "features", "title": "Feature Used: Integrations", "description": "alice@acme.co connected Slack workspace", "icon": "🔗", "tags": { "feature": "integrations", "service": "slack" }, "minutes_ago": 45 },
+    { "channel": "auth", "title": "User Login", "description": "henry@freelance.me logged in for the first time", "icon": "🔑", "tags": { "user": "henry@freelance.me", "first_login": true }, "minutes_ago": 10 }
+  ]
+}
