@@ -119,7 +119,7 @@ The instructions for this week are confusing, but what it boils down to is a fro
 
     -H 'content-type: application/json' \
      -d '{"name":"My Monitoring Project"}'
-    {"project":{"id":"d9e6a038-7991-4a13-820b-20a01c5a3e8b","name":"My Monitoring Project","created_at":"2026-03-07T01:04:35.293425+00:00"},"apiKey":"evt_874d2d4cfddcb5038cb0d85677cef094f4de6c4ab30f45ae"}
+    {"project":{"id":"d9e6a038-7991-4a13-820b-20a01c5a3e8b","name":"My Monitoring Project","created_at":"2026-03-07T01:04:35.293425+00:00"},"apiKey":"evt_<PROJECT_API_KEY_1>"}
 
         ````
 
@@ -195,6 +195,128 @@ To get the API key, add a project, create the name, and save the API key shown. 
 AI made a UI change such that the API key is shown to the user once the project is created and from that modal dialog, the user can copy the API key for later usage (e.g. script to upload data).
 
 Using this API key:
-evt_4fd5e03fb0688be34d56c489bc0aa1946564675b56e0aa90
+evt_<PROJECT_API_KEY_2>
 
-./scripts/import-events.sh evt_4fd5e03fb0688be34d56c489bc0aa1946564675b56e0aa90 TestData/saas-demo.json
+./scripts/import-events.sh evt_<PROJECT_API_KEY_2> TestData/saas-demo.json
+
+11. To deploy to Render:
+
+    Push code to GitHub
+    Make sure api/ and your latest changes are committed and pushed.
+    Create a new Render Web Service
+    Render dashboard -> New -> Web Service
+    Connect your GitHub repo
+
+    Configure:
+    Branch: main (or your deploy branch)
+    Root Directory: api
+    Runtime: Node
+    Build Command: npm ci
+    Start Command: npm start
+    Instance Type: Free (or paid)
+
+    Add environment variables in Render
+    SUPABASE_URL = your Supabase project URL
+    SUPABASE_SECRET_KEY = your Supabase secret key
+    CORS_ORIGINS = http://localhost:5173,http://127.0.0.1:5173
+
+    Do not put these in GitHub; set them in Render service settings.
+
+    Health check
+    In Render service settings, set health check path to:
+    /health
+
+    Deploy
+    Click Create Web Service
+    Wait for deploy logs to finish
+    Test:
+    curl https://<your-service>.onrender.com/health
+    Point your local dashboard to remote API
+    In dashboard/.env:
+    VITE_API_BASE_URL=https://<your-service>.onrender.com
+    Restart dashboard dev server.
+
+    Important note:
+
+    On Render Free, services spin down after idle time (cold starts). For truly always-on behavior, use a paid instance.
+    Sources:
+
+    https://render.com/docs/your-first-deploy
+    https://render.com/docs/monorepo-support
+    https://render.com/docs/deploys
+    https://render.com/docs/health-checks
+    https://render.com/free
+
+12. Git repository:
+    1.  First, make the repo on Git! It is automatically set to "public".
+    2.  Then init the vscode repo
+    3.  Use these commands (given by git) to associate the vscode repo with the online repo - in the Week2 folder:
+        1.  remote add origin https://github.com/PattyHarris/FlavioCopesAI-Week2.git
+        2.  branch -M master
+        3.  This last one didn't work: push -u origin master
+    4.  Then, when you start using git to send changes, it works with the online repo.
+13. Test: curl https://flaviocopesai-week2.onrender.com/health
+14. To add a new event to a given project:
+    curl -X POST https://flaviocopesai-week2.onrender.com/api/events \
+    -H 'content-type: application/json' \
+    -H 'x-api-key: evt_<PROJECT_API_KEY_2>' \
+    -d '{"channel":"deploys","title":"Manual test event","description":"Sent via curl to Render API","emoji":"🧪","tags":["manual","render-test"]}'
+
+15. To test the script used for pinging weather:
+    OPENWEATHER_API_KEY=<OPENWEATHER_API_KEY> \
+    WEATHER_LAT=37.7749 \
+    WEATHER_LON=-122.4194 \
+    WEATHER_LABEL="San Francisco" \
+    EVENTS_API_BASE_URL=https://flaviocopesai-week2.onrender.com \
+    EVENTS_API_KEY=evt_<PROJECT_API_KEY_2> \
+    node scripts/push-weather-event.mjs
+
+    Snapshot of all IDs:
+
+    SUPABASE*URL -> which Supabase project/database
+    SUPABASE_SECRET_KEY -> backend access to that database
+    project.id (UUID) -> which dashboard project to view
+    evt*... API key -> permission to send events into that project
+    OpenWeather API key -> permission to read weather data from OpenWeather
+
+16. New weather project:
+    Key: evt_<WEATHER_PROJECT_API_KEY>
+
+17. For the Chron job:
+    Test once locally
+
+    OPENWEATHER_API_KEY=... \
+    WEATHER_LAT=37.7749 \
+    WEATHER_LON=-122.4194 \
+    WEATHER_LABEL="San Francisco" \
+    EVENTS_API_BASE_URL=https://flaviocopesai-week2.onrender.com \
+    EVENTS_API_KEY=evt_<WEATHER_PROJECT_API_KEY> \
+    node scripts/push-weather-event.mjs
+    
+    1) Create a Render Cron Job
+
+        New -> Cron Job
+        Repo: same repo
+        Branch: main
+        Root directory: project root
+        Build command: npm ci --prefix api (or just echo "no build" if not needed)
+        Command: node scripts/push-weather-event.mjs
+        Schedule: */10 * * * * (every 10 min, UTC)
+
+    2) Add Cron Job env vars
+
+        OPENWEATHER_API_KEY
+        WEATHER_LAT
+        WEATHER_LON
+        WEATHER_LABEL
+        EVENTS_API_BASE_URL=https://flaviocopesai-week2.onrender.com
+        EVENTS_API_KEY (from your project in your events system)
+        optional WEATHER_UNITS=metric
+        
+        That gives you continuous weather events flowing into the same realtime dashboard.
+
+    Sources:
+
+    OpenWeather API overview: https://openweathermap.org/api
+    OpenWeather current weather endpoint: https://old.openweathermap.org/current
+    Render Cron Jobs: https://render.com/docs/cronjobs
