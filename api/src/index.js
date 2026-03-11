@@ -33,6 +33,12 @@ const eventSchema = z.object({
   eventTime: z.string().datetime().optional()
 });
 
+function bearerToken(req) {
+  const authHeader = req.header('authorization');
+  if (!authHeader?.startsWith('Bearer ')) return null;
+  return authHeader.replace('Bearer ', '').trim();
+}
+
 app.get('/health', (_, res) => {
   res.json({ ok: true, service: 'events-api' });
 });
@@ -45,11 +51,22 @@ app.post('/api/projects', async (req, res) => {
 
   const rawKey = `evt_${crypto.randomBytes(24).toString('hex')}`;
   const apiKeyHash = crypto.createHash('sha256').update(rawKey).digest('hex');
+  const token = bearerToken(req);
+
+  if (!token) {
+    return res.status(401).json({ error: 'Missing Supabase user token' });
+  }
+
+  const { data: authUser, error: authError } = await supabase.auth.getUser(token);
+  if (authError || !authUser?.user) {
+    return res.status(401).json({ error: 'Invalid Supabase user token' });
+  }
 
   const { data, error } = await supabase
     .from('projects')
     .insert({
       name: parsed.data.name,
+      owner_user_id: authUser.user.id,
       api_key_hash: apiKeyHash,
       api_key_last4: rawKey.slice(-4)
     })

@@ -337,3 +337,44 @@ POST /api/projects (expect project.id + apiKey)
 POST /api/events with that apiKey (expect 201)
 Confirm event appears in dashboard feed
 
+18. Before moving to Week3 I want to added authentication to this project as a test to next week's project:
+
+    RLS = Row Level Security.
+    It is Supabase/Postgres policy logic that decides which rows each logged-in user is allowed to read/write. Without strong RLS, people can still query data if they have the frontend key.
+
+    I implemented the hardening for you.
+
+    What I changed:
+
+    Enforced auth + ownership in DB policies
+    Updated schema.sql:
+    projects.owner_user_id column added
+    projects readable only when owner_user_id = auth.uid()
+    events readable only if event’s project belongs to auth.uid()
+    old anon-read policy removed
+    Bound project creation to logged-in Supabase user
+    Updated index.js:
+    POST /api/projects now requires Authorization: Bearer <supabase access token>
+    backend validates token via Supabase Auth and stores owner_user_id
+    Dashboard sends Supabase access token when creating projects
+    Updated App.jsx:
+    create-project request now includes Authorization bearer token
+    Added login/logout UI gate (from prior step)
+    App.jsx
+    styles.css
+    Docs updated
+    README.md
+    Validation:
+
+    node --check api/src/index.js passed
+    npm --prefix dashboard run build passed
+    What you need to do next:
+
+    Run updated schema.sql in Supabase SQL Editor.
+
+    If you had old projects, backfill owner_user_id once (README includes SQL).
+
+    Redeploy backend on Render (so new auth requirement for POST /api/projects is live).
+    
+    Restart local dashboard.
+    If you want, I can give you the exact SQL to backfill ownership for the user currently logged in (using their auth UUID).

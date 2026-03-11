@@ -49,6 +49,14 @@ function HomeIcon() {
 }
 
 export default function App() {
+  const [session, setSession] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authMode, setAuthMode] = useState('signin');
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authBusy, setAuthBusy] = useState(false);
+  const [authInfo, setAuthInfo] = useState('');
+
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [channel, setChannel] = useState('all');
@@ -85,6 +93,39 @@ export default function App() {
   }, [projects]);
 
   useEffect(() => {
+    if (!hasSupabaseConfig) {
+      setAuthLoading(false);
+      return;
+    }
+
+    let mounted = true;
+
+    async function loadSession() {
+      const { data, error: sessionError } = await supabase.auth.getSession();
+      if (!mounted) return;
+
+      if (sessionError) {
+        setError(sessionError.message);
+      } else {
+        setSession(data.session ?? null);
+      }
+      setAuthLoading(false);
+    }
+
+    loadSession();
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_, nextSession) => {
+      setSession(nextSession ?? null);
+    });
+
+    return () => {
+      mounted = false;
+      listener.subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!session) return;
     if (!hasSupabaseConfig || !selectedProjectId || !isUuid(selectedProjectId)) {
       setEvents([]);
       return;
@@ -131,7 +172,7 @@ export default function App() {
       mounted = false;
       supabase.removeChannel(channelSub);
     };
-  }, [selectedProjectId]);
+  }, [selectedProjectId, session]);
 
   const channels = useMemo(() => ['all', ...new Set(events.map((event) => event.channel))], [events]);
 
@@ -168,7 +209,10 @@ export default function App() {
       } else {
         const response = await fetch(`${apiBaseUrl}/api/projects`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session?.access_token || ''}`
+          },
           body: JSON.stringify({ name: projectNameInput.trim() })
         });
 
@@ -214,6 +258,47 @@ export default function App() {
       setCopiedApiKey(false);
       setError('Could not copy API key automatically. Please copy it manually.');
     }
+  }
+
+  async function handleAuthSubmit(event) {
+    event.preventDefault();
+    setError('');
+    setAuthInfo('');
+
+    if (!authEmail.trim() || !authPassword) {
+      setError('Email and password are required.');
+      return;
+    }
+
+    setAuthBusy(true);
+    try {
+      if (authMode === 'signin') {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: authEmail.trim(),
+          password: authPassword
+        });
+        if (signInError) throw signInError;
+      } else {
+        const { error: signUpError } = await supabase.auth.signUp({
+          email: authEmail.trim(),
+          password: authPassword
+        });
+        if (signUpError) throw signUpError;
+        setAuthMode('signin');
+        setAuthInfo('Account created. Confirm your email if required, then sign in.');
+      }
+      setAuthPassword('');
+    } catch (authError) {
+      setError(authError.message || 'Authentication failed.');
+    } finally {
+      setAuthBusy(false);
+    }
+  }
+
+  async function handleLogout() {
+    setError('');
+    await supabase.auth.signOut();
+    resetToHome();
   }
 
   function resetToHome() {
@@ -300,8 +385,79 @@ export default function App() {
     }
   }
 
+  const showAuthenticatedApp = hasSupabaseConfig && !authLoading && Boolean(session);
+
   return (
     <main className="app-shell">
+      {!hasSupabaseConfig ? (
+        <section className="panel setup-panel">
+          <h2>Configuration Required</h2>
+          <p>Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` to `dashboard/.env`.</p>
+        </section>
+      ) : null}
+
+      {hasSupabaseConfig && authLoading ? (
+        <section className="panel setup-panel">
+          <h2>Checking session</h2>
+          <p>Loading authentication state...</p>
+        </section>
+      ) : null}
+
+      {hasSupabaseConfig && !authLoading && !session ? (
+        <section className="panel auth-card">
+          <h2>{authMode === 'signin' ? 'Sign in' : 'Create account'}</h2>
+          <p>Login to access your dashboard projects.</p>
+          {authInfo ? <p className="auth-info">{authInfo}</p> : null}
+          <form className="auth-form" onSubmit={handleAuthSubmit}>
+            <label>
+              Email
+              <input
+                type="email"
+                value={authEmail}
+                onChange={(event) => setAuthEmail(event.target.value)}
+                placeholder="you@example.com"
+                autoComplete="email"
+                required
+              />
+            </label>
+            <label>
+              Password
+              <input
+                type="password"
+                value={authPassword}
+                onChange={(event) => setAuthPassword(event.target.value)}
+                placeholder="Your password"
+                autoComplete={authMode === 'signin' ? 'current-password' : 'new-password'}
+                required
+              />
+            </label>
+            <div className="auth-actions">
+              <button type="submit" disabled={authBusy}>
+                {authBusy ? 'Please wait...' : authMode === 'signin' ? 'Sign in' : 'Create account'}
+              </button>
+              <button
+                type="button"
+                className="ghost-btn"
+                onClick={() => {
+                  setAuthInfo('');
+                  setError('');
+                  setAuthMode((prev) => (prev === 'signin' ? 'signup' : 'signin'));
+                }}
+                disabled={authBusy}
+              >
+                {authMode === 'signin' ? 'Need an account?' : 'Already have an account?'}
+              </button>
+            </div>
+          </form>
+        </section>
+      ) : null}
+
+      {hasSupabaseConfig && !authLoading && !session ? (
+        error ? <p className="error panel">{error}</p> : null
+      ) : null}
+
+      {showAuthenticatedApp ? (
+      <>
       <header className="topbar">
         <div className="topbar-actions">
           <button type="button" className="ghost-btn" onClick={resetToHome} disabled={!showDashboard}>
@@ -321,16 +477,10 @@ export default function App() {
             ))}
           </select>
           <button type="button" className="add-btn" onClick={() => setShowCreateModal(true)}>+</button>
+          <button type="button" className="ghost-btn" onClick={handleLogout}>Logout</button>
         </div>
         <h1>Events Dashboard</h1>
       </header>
-
-      {!hasSupabaseConfig ? (
-        <section className="panel setup-panel">
-          <h2>Configuration Required</h2>
-          <p>Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` to `dashboard/.env`.</p>
-        </section>
-      ) : null}
 
       {!showDashboard ? (
         <section className="panel welcome-panel">
@@ -501,6 +651,8 @@ export default function App() {
             </div>
           </section>
         </div>
+      ) : null}
+      </>
       ) : null}
     </main>
   );

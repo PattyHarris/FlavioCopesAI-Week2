@@ -35,6 +35,7 @@ Required env:
 ### API endpoints
 
 - `POST /api/projects`
+  - Header: `Authorization: Bearer <supabase access token>`
   - Body: `{ "name": "My Project" }`
   - Returns a one-time `apiKey` and `project.id`
 
@@ -57,11 +58,7 @@ Required env:
 
 ### Create project + key
 
-```bash
-curl -X POST http://localhost:8080/api/projects \
-  -H 'content-type: application/json' \
-  -d '{"name":"My Monitoring Project"}'
-```
+Create projects from the authenticated dashboard UI (`+` button), or call the endpoint with a valid Supabase user access token.
 
 Save the returned `apiKey` and `project.id`.
 
@@ -108,6 +105,19 @@ Project flow in the dashboard UI:
 - Use the project dropdown (left of `+`) to switch between saved projects.
 - After creating a project, an API key modal appears with a copy button. Save the key immediately.
 - The dashboard stores created/added projects in local browser storage.
+- Dashboard access now requires Supabase Auth sign-in.
+
+## 4) RLS hardening note
+
+`supabase/schema.sql` now enforces authenticated, owner-only reads for `projects` and `events`.
+
+If you already had projects before this change, run this once in Supabase SQL Editor to backfill ownership for your current user:
+
+```sql
+update public.projects
+set owner_user_id = 'YOUR_AUTH_USER_UUID'
+where owner_user_id is null;
+```
 
 Open `http://localhost:5173`.
 
