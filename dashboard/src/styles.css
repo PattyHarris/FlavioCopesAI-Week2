@@ -213,6 +213,48 @@ button {
   margin-bottom: 12px;
 }
 
+.widgets-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 12px;
+  align-items: stretch;
+  margin-bottom: 12px;
+}
+
+.widgets-row .chart-panel {
+  margin-bottom: 0;
+}
+
+.insights-panel {
+  padding: 12px;
+}
+
+.insights-grid {
+  margin-top: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.insight-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.insight-card span {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.insight-card strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 1.5rem;
+  line-height: 1.1;
+}
+
 .panel-header h2 {
   margin: 4px 0 0;
   font-size: 1rem;
@@ -434,6 +476,10 @@ p {
   }
 
   .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .widgets-row {
     grid-template-columns: 1fr;
   }
 

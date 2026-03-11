@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import ActivityChart from './components/ActivityChart.jsx';
 import EventFeed from './components/EventFeed.jsx';
+import InsightsPanel from './components/InsightsPanel.jsx';
 import { apiBaseUrl, hasSupabaseConfig, initialProjectId, supabase } from './supabase.js';
 
 const STORAGE_KEY = 'events-dashboard-projects-v1';
@@ -531,21 +532,6 @@ export default function App() {
             <p>Real-time feed for your project instrumentation.</p>
           </section>
 
-          <section className="stats-grid">
-            <article className="panel stat">
-              <span>Total Events</span>
-              <strong>{events.length}</strong>
-            </article>
-            <article className="panel stat">
-              <span>Visible</span>
-              <strong>{filteredEvents.length}</strong>
-            </article>
-            <article className="panel stat">
-              <span>Channels</span>
-              <strong>{channels.length - 1}</strong>
-            </article>
-          </section>
-
           <section className="panel controls">
             <label>
               Channel
@@ -571,7 +557,10 @@ export default function App() {
 
           {loading ? <p className="loading">Loading events…</p> : null}
 
-          <ActivityChart events={events} />
+          <section className="widgets-row">
+            <ActivityChart events={events} />
+            <InsightsPanel events={events} />
+          </section>
           <EventFeed events={filteredEvents} onDelete={handleDeleteEvent} deletingIds={deletingEventIds} />
         </>
       )}
