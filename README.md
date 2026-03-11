@@ -6,6 +6,8 @@ Two-part app:
 
 Data is stored in Supabase cloud Postgres.
 
+Security notes: see [`SECURITY.md`](./SECURITY.md) before committing or deploying.
+
 ## 1) Supabase setup
 
 1. Create a Supabase project.

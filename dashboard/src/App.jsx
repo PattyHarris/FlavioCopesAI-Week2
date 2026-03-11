@@ -32,6 +32,22 @@ function saveStoredProjects(projects) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
 }
 
+function TrashIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM7 9h2v9H7V9z" />
+    </svg>
+  );
+}
+
+function HomeIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5z" />
+    </svg>
+  );
+}
+
 export default function App() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -54,6 +70,10 @@ export default function App() {
   const [createdApiKey, setCreatedApiKey] = useState('');
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [copiedApiKey, setCopiedApiKey] = useState(false);
+
+  const [deletingEventIds, setDeletingEventIds] = useState(() => new Set());
+  const [projectToDelete, setProjectToDelete] = useState(null);
+  const [deletingProject, setDeletingProject] = useState(false);
 
   const selectedProject = useMemo(
     () => projects.find((project) => project.id === selectedProjectId) || null,
@@ -196,11 +216,99 @@ export default function App() {
     }
   }
 
+  function resetToHome() {
+    setSelectedProjectId('');
+    setChannel('all');
+    setSearch('');
+    setEvents([]);
+  }
+
+  async function handleDeleteEvent(event) {
+    if (!selectedProject?.apiKey) {
+      setError('Missing API key for this project. Re-add the project with its API key to delete events.');
+      return;
+    }
+
+    setDeletingEventIds((prev) => {
+      const next = new Set(prev);
+      next.add(event.id);
+      return next;
+    });
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/events/${event.id}`, {
+        method: 'DELETE',
+        headers: {
+          'x-api-key': selectedProject.apiKey
+        }
+      });
+
+      if (!response.ok) {
+        const payload = await response.json();
+        throw new Error(payload.error || 'Failed to delete event');
+      }
+
+      setEvents((prev) => prev.filter((item) => item.id !== event.id));
+    } catch (deleteError) {
+      setError(deleteError.message || 'Failed to delete event.');
+    } finally {
+      setDeletingEventIds((prev) => {
+        const next = new Set(prev);
+        next.delete(event.id);
+        return next;
+      });
+    }
+  }
+
+  function requestDeleteProject(project) {
+    setProjectToDelete(project);
+  }
+
+  async function handleConfirmDeleteProject() {
+    if (!projectToDelete) return;
+    if (!projectToDelete.apiKey) {
+      setError('Missing API key for this project. Re-add the project with its API key to delete it.');
+      setProjectToDelete(null);
+      return;
+    }
+
+    setDeletingProject(true);
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/projects/${projectToDelete.id}`, {
+        method: 'DELETE',
+        headers: {
+          'x-api-key': projectToDelete.apiKey
+        }
+      });
+
+      if (!response.ok) {
+        const payload = await response.json();
+        throw new Error(payload.error || 'Failed to delete project');
+      }
+
+      setProjects((prev) => prev.filter((project) => project.id !== projectToDelete.id));
+      if (selectedProjectId === projectToDelete.id) {
+        resetToHome();
+      }
+      setProjectToDelete(null);
+    } catch (deleteError) {
+      setError(deleteError.message || 'Failed to delete project.');
+      setProjectToDelete(null);
+    } finally {
+      setDeletingProject(false);
+    }
+  }
+
   return (
     <main className="app-shell">
       <header className="topbar">
         <h1>Events Dashboard</h1>
         <div className="topbar-actions">
+          <button type="button" className="ghost-btn" onClick={resetToHome} disabled={!showDashboard}>
+            <HomeIcon />
+            Home
+          </button>
           <select
             value={selectedProjectId}
             onChange={(e) => setSelectedProjectId(e.target.value)}
@@ -229,11 +337,47 @@ export default function App() {
           <h2>Welcome to Events Dashboard</h2>
           <p>Select an existing project from the dropdown, or click + to create a new one.</p>
           <p>If you already have an API key and project UUID, add both in the create dialog to register that project locally.</p>
+
+          {projects.length ? (
+            <div className="project-list">
+              {projects.map((project) => (
+                <div key={project.id} className="project-card">
+                  <div>
+                    <strong>{project.name}</strong>
+                    <div className="muted">{project.id}</div>
+                  </div>
+                  <div className="project-actions">
+                    <button type="button" onClick={() => setSelectedProjectId(project.id)}>Open</button>
+                    <button
+                      type="button"
+                      className="icon-btn danger"
+                      onClick={() => requestDeleteProject(project)}
+                      aria-label="Delete project"
+                      disabled={!project.apiKey}
+                    >
+                      <TrashIcon />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : null}
         </section>
       ) : (
         <>
           <section className="hero">
-            <h2>{selectedProject?.name || 'Live Events'}</h2>
+            <div className="hero-row">
+              <h2>{selectedProject?.name || 'Live Events'}</h2>
+              <button
+                type="button"
+                className="icon-btn danger"
+                onClick={() => selectedProject && requestDeleteProject(selectedProject)}
+                aria-label="Delete project"
+                disabled={!selectedProject?.apiKey}
+              >
+                <TrashIcon />
+              </button>
+            </div>
             <p>Real-time feed for your project instrumentation.</p>
           </section>
 
@@ -279,7 +423,7 @@ export default function App() {
 
           <section className="grid">
             <ActivityChart events={events} />
-            <EventFeed events={filteredEvents} />
+            <EventFeed events={filteredEvents} onDelete={handleDeleteEvent} deletingIds={deletingEventIds} />
           </section>
         </>
       )}
@@ -341,6 +485,21 @@ export default function App() {
                 {copiedApiKey ? 'Copied' : 'Copy Key'}
               </button>
               <button type="button" onClick={() => setShowApiKeyModal(false)}>Done</button>
+            </div>
+          </section>
+        </div>
+      ) : null}
+
+      {projectToDelete ? (
+        <div className="modal-overlay" onClick={() => setProjectToDelete(null)}>
+          <section className="panel modal confirm-modal" onClick={(event) => event.stopPropagation()}>
+            <h3>Delete project?</h3>
+            <p>Are you sure? This action cannot be reversed.</p>
+            <div className="modal-actions">
+              <button type="button" onClick={() => setProjectToDelete(null)}>Cancel</button>
+              <button type="button" className="danger" onClick={handleConfirmDeleteProject} disabled={deletingProject}>
+                {deletingProject ? 'Deleting...' : 'Delete'}
+              </button>
             </div>
           </section>
         </div>

@@ -111,19 +111,19 @@ The instructions for this week are confusing, but what it boils down to is a fro
     cd api && npm install && npm run dev
     cd dashboard && npm install && npm run dev
 
-7.  Since I was confused about what this project was supposed to do, I initially had an error and need to run this (as instructed by AI) to fix an error:
+7. Since I was confused about what this project was supposed to do, I initially had an error and need to run this (as instructed by AI) to fix an error:
 
-        ````bash
+    ````bash
 
         curl -X POST http://localhost:8080/api/projects \
 
-    -H 'content-type: application/json' \
-     -d '{"name":"My Monitoring Project"}'
-    {"project":{"id":"d9e6a038-7991-4a13-820b-20a01c5a3e8b","name":"My Monitoring Project","created_at":"2026-03-07T01:04:35.293425+00:00"},"apiKey":"evt_<PROJECT_API_KEY_1>"}
+        -H 'content-type: application/json' \
+        -d '{"name":"My Monitoring Project"}'
+        {"project":{"id":"d9e6a038-7991-4a13-820b-20a01c5a3e8b","name":"My Monitoring Project","created*at":"2026-03-07T01:04:35.293425+00:00"},"apiKey":"evt*<PROJECT_API_KEY_1>"}
 
-        ````
+    ````
 
-8.  I asked the AI to fix this and it added this as per my instructions:
+8. I asked the AI to fix this and it added this as per my instructions:
 
     ```text
     Implemented. The dashboard now has the project onboarding flow you described.
@@ -147,7 +147,7 @@ The instructions for this week are confusing, but what it boils down to is a fro
         dashboard/.env
     ```
 
-9.  I didn't see the main dashboard page so I needed to essentially a new project setup - e.g. clear any project data that was there. ChatGPT indicated that I did NOT need to refresh the database, but instead:
+9. I didn't see the main dashboard page so I needed to essentially a new project setup - e.g. clear any project data that was there. ChatGPT indicated that I did NOT need to refresh the database, but instead:
 
 Current behavior is expected because the dashboard remembers project selection and auto-enters the dashboard view on reload.
 
@@ -195,9 +195,9 @@ To get the API key, add a project, create the name, and save the API key shown. 
 AI made a UI change such that the API key is shown to the user once the project is created and from that modal dialog, the user can copy the API key for later usage (e.g. script to upload data).
 
 Using this API key:
-evt_<PROJECT_API_KEY_2>
+evt\_<PROJECT_API_KEY_2>
 
-./scripts/import-events.sh evt_<PROJECT_API_KEY_2> TestData/saas-demo.json
+./scripts/import-events.sh evt\_<PROJECT_API_KEY_2> TestData/saas-demo.json
 
 11. To deploy to Render:
 
@@ -259,16 +259,16 @@ evt_<PROJECT_API_KEY_2>
 14. To add a new event to a given project:
     curl -X POST https://flaviocopesai-week2.onrender.com/api/events \
     -H 'content-type: application/json' \
-    -H 'x-api-key: evt_<PROJECT_API_KEY_2>' \
+    -H 'x-api-key: evt\_<PROJECT_API_KEY_2>' \
     -d '{"channel":"deploys","title":"Manual test event","description":"Sent via curl to Render API","emoji":"🧪","tags":["manual","render-test"]}'
 
 15. To test the script used for pinging weather:
-    OPENWEATHER_API_KEY=<OPENWEATHER_API_KEY> \
+    OPENWEATHER*API_KEY=<OPENWEATHER_API_KEY> \
     WEATHER_LAT=37.7749 \
     WEATHER_LON=-122.4194 \
     WEATHER_LABEL="San Francisco" \
     EVENTS_API_BASE_URL=https://flaviocopesai-week2.onrender.com \
-    EVENTS_API_KEY=evt_<PROJECT_API_KEY_2> \
+    EVENTS_API_KEY=evt*<PROJECT_API_KEY_2> \
     node scripts/push-weather-event.mjs
 
     Snapshot of all IDs:
@@ -280,43 +280,60 @@ evt_<PROJECT_API_KEY_2>
     OpenWeather API key -> permission to read weather data from OpenWeather
 
 16. New weather project:
-    Key: evt_<WEATHER_PROJECT_API_KEY>
+    Key: evt\_<WEATHER_PROJECT_API_KEY>
 
 17. For the Chron job:
     Test once locally
 
-    OPENWEATHER_API_KEY=... \
+    OPENWEATHER*API_KEY=... \
     WEATHER_LAT=37.7749 \
     WEATHER_LON=-122.4194 \
     WEATHER_LABEL="San Francisco" \
     EVENTS_API_BASE_URL=https://flaviocopesai-week2.onrender.com \
-    EVENTS_API_KEY=evt_<WEATHER_PROJECT_API_KEY> \
+    EVENTS_API_KEY=evt*<WEATHER_PROJECT_API_KEY> \
     node scripts/push-weather-event.mjs
-    
-    1) Create a Render Cron Job
+    1. Create a Render Cron Job
 
-        New -> Cron Job
-        Repo: same repo
-        Branch: main
-        Root directory: project root
-        Build command: npm ci --prefix api (or just echo "no build" if not needed)
-        Command: node scripts/push-weather-event.mjs
-        Schedule: */10 * * * * (every 10 min, UTC)
+       New -> Cron Job
+       Repo: same repo
+       Branch: main
+       Root directory: project root
+       Build command: npm ci --prefix api (or just echo "no build" if not needed)
+       Command: node scripts/push-weather-event.mjs
+       Schedule: _/10 _ \* \* \* (every 10 min, UTC)
 
-    2) Add Cron Job env vars
+    2. Add Cron Job env vars
 
-        OPENWEATHER_API_KEY
-        WEATHER_LAT
-        WEATHER_LON
-        WEATHER_LABEL
-        EVENTS_API_BASE_URL=https://flaviocopesai-week2.onrender.com
-        EVENTS_API_KEY (from your project in your events system)
-        optional WEATHER_UNITS=metric
-        
-        That gives you continuous weather events flowing into the same realtime dashboard.
+       OPENWEATHER_API_KEY
+       WEATHER_LAT
+       WEATHER_LON
+       WEATHER_LABEL
+       EVENTS_API_BASE_URL=https://flaviocopesai-week2.onrender.com
+       EVENTS_API_KEY (from your project in your events system)
+       optional WEATHER_UNITS=metric
+
+       That gives you continuous weather events flowing into the same realtime dashboard.
 
     Sources:
 
     OpenWeather API overview: https://openweathermap.org/api
     OpenWeather current weather endpoint: https://old.openweathermap.org/current
     Render Cron Jobs: https://render.com/docs/cronjobs
+
+Apparently I cannot store the evt_keys on git:
+
+Security follow-up:
+
+Rotate your OpenWeather key.
+Rotate any evt\_... project API keys that were written in notes/terminal history.
+
+NOTE: cron job is currently suspended....
+
+For retesting:
+
+Quick retest sequence:
+
+POST /api/projects (expect project.id + apiKey)
+POST /api/events with that apiKey (expect 201)
+Confirm event appears in dashboard feed
+

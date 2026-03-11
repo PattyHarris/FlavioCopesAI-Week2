@@ -109,6 +109,60 @@ app.get('/api/events/recent', authenticateApiKey, async (req, res) => {
   res.json({ events: data });
 });
 
+app.delete('/api/events/:id', authenticateApiKey, async (req, res) => {
+  const eventId = Number.parseInt(req.params.id, 10);
+  if (!Number.isInteger(eventId)) {
+    return res.status(400).json({ error: 'Invalid event id' });
+  }
+
+  const { data: event, error: fetchError } = await supabase
+    .from('events')
+    .select('id, project_id')
+    .eq('id', eventId)
+    .maybeSingle();
+
+  if (fetchError) {
+    return res.status(500).json({ error: 'Failed to lookup event', details: fetchError.message });
+  }
+
+  if (!event) {
+    return res.status(404).json({ error: 'Event not found' });
+  }
+
+  if (event.project_id !== req.project.id) {
+    return res.status(403).json({ error: 'Not authorized to delete this event' });
+  }
+
+  const { error: deleteError } = await supabase
+    .from('events')
+    .delete()
+    .eq('id', eventId);
+
+  if (deleteError) {
+    return res.status(500).json({ error: 'Failed to delete event', details: deleteError.message });
+  }
+
+  return res.json({ ok: true });
+});
+
+app.delete('/api/projects/:id', authenticateApiKey, async (req, res) => {
+  const projectId = req.params.id;
+  if (projectId !== req.project.id) {
+    return res.status(403).json({ error: 'Not authorized to delete this project' });
+  }
+
+  const { error } = await supabase
+    .from('projects')
+    .delete()
+    .eq('id', projectId);
+
+  if (error) {
+    return res.status(500).json({ error: 'Failed to delete project', details: error.message });
+  }
+
+  return res.json({ ok: true });
+});
+
 app.listen(port, () => {
   console.log(`events-api listening on :${port}`);
 });
