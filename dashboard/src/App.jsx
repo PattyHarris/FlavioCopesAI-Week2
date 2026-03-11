@@ -303,7 +303,6 @@ export default function App() {
   return (
     <main className="app-shell">
       <header className="topbar">
-        <h1>Events Dashboard</h1>
         <div className="topbar-actions">
           <button type="button" className="ghost-btn" onClick={resetToHome} disabled={!showDashboard}>
             <HomeIcon />
@@ -323,6 +322,7 @@ export default function App() {
           </select>
           <button type="button" className="add-btn" onClick={() => setShowCreateModal(true)}>+</button>
         </div>
+        <h1>Events Dashboard</h1>
       </header>
 
       {!hasSupabaseConfig ? (
@@ -366,7 +366,7 @@ export default function App() {
       ) : (
         <>
           <section className="hero">
-            <div className="hero-row">
+            <div className="title-with-actions">
               <h2>{selectedProject?.name || 'Live Events'}</h2>
               <button
                 type="button"
@@ -421,10 +421,8 @@ export default function App() {
 
           {loading ? <p className="loading">Loading events…</p> : null}
 
-          <section className="grid">
-            <ActivityChart events={events} />
-            <EventFeed events={filteredEvents} onDelete={handleDeleteEvent} deletingIds={deletingEventIds} />
-          </section>
+          <ActivityChart events={events} />
+          <EventFeed events={filteredEvents} onDelete={handleDeleteEvent} deletingIds={deletingEventIds} />
         </>
       )}
 

@@ -28,8 +28,8 @@ body {
 
 .topbar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 14px;
   margin-bottom: 16px;
 }
@@ -43,6 +43,8 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
+  width: 100%;
+  justify-content: flex-end;
 }
 
 .ghost-btn {
@@ -82,11 +84,11 @@ body {
   margin-bottom: 14px;
 }
 
-.hero-row {
+.title-with-actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  justify-content: flex-start;
+  gap: 8px;
 }
 
 .hero h2 {
@@ -174,16 +176,13 @@ button {
   cursor: pointer;
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: 1.15fr 1fr;
-  gap: 12px;
-  align-items: start;
-}
-
 .chart-panel,
 .feed-panel {
   padding: 12px;
+}
+
+.chart-panel {
+  margin-bottom: 12px;
 }
 
 .panel-header h2 {
@@ -395,20 +394,15 @@ p {
   color: #7f1d1d;
 }
 
-@media (max-width: 960px) {
-  .grid {
-    grid-template-columns: 1fr;
-  }
-}
-
 @media (max-width: 720px) {
   .topbar {
-    flex-direction: column;
     align-items: stretch;
   }
 
   .topbar-actions {
     width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
   }
 
   .stats-grid {
