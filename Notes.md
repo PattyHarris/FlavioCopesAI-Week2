@@ -2,150 +2,162 @@
 
 The instructions for this week are confusing, but what it boils down to is a front end and a remote back end. The front end should require a "new project" where the user gives an ID and a name. The back end should be attached to live data - more on that later.
 
-1.  See this URL (that may be closed off later) for an introduction to Vercel's V0 platform - it's an unlocked class from one of Flavio's prior courses:
+## Restarting This Project
 
-    ```URL
-        [v0-315aaea99f25801d85dcd070d5220cce](https://flaviocopes.notion.site/v0-315aaea99f25801d85dcd070d5220cce)
-    ```
+NOTE: cron job on Render is currently suspended.
 
-2.  To use a discount code:
-    I have managed to get everyone $30 in v0 credits, giving some free allowance for those waiting on the OpenAI credits (hopefully those will be unlocked soon!!)
+To re-activate jobs in the terminal:
+-- dashboard/npm run dev
+-- events-api/npm run dev (for local testing)
+For remote testing, on Render
+-- Reactivate the cron job in render
+-- You may need to redploy FlavioCopesAIWeek2-LiveData
+Supabase: Flavio Copes AI Bootcamp Week 2 may need to be reactivated. They are automatically paused after 1 week. On the free tier you are allowed only 2 active projects.
 
-    use code FLAVIO-V0
+1. See this URL (that may be closed off later) for an introduction to Vercel's V0 platform - it's an unlocked class from one of Flavio's prior courses:
 
-    Also if you sign up with my referral link you get $5 free, so it's $35 in credits total. Basically almost 2 months of the v0 Pro plan.
+   ```URL
+       [v0-315aaea99f25801d85dcd070d5220cce](https://flaviocopes.notion.site/v0-315aaea99f25801d85dcd070d5220cce)
+   ```
 
-    credits will expire in 3 months, and can be redeemed once per v0 account.
+2. To use a discount code:
+   I have managed to get everyone $30 in v0 credits, giving some free allowance for those waiting on the OpenAI credits (hopefully those will be unlocked soon!!)
 
-3.  This week's class also includes a video on setting up the project using v0 as well as Codex.
-4.  Set up a free Supabase account using Github.
-5.  The Project is Flavio Copes AI Bootcamp Week 2 with a password using the alternate bar with 2 ending non-alphabetic characters.
-6.  This is what the Codex generated:
+   use code FLAVIO-V0
 
-    ```text
-    Implemented a complete two-part app scaffold in your workspace:
+   Also if you sign up with my referral link you get $5 free, so it's $35 in credits total. Basically almost 2 months of the v0 Pro plan.
 
-    Remote-ready Node/Express API with API key auth and Supabase storage.
-    Local React dashboard with realtime feed, channel filter, search, and activity chart.
-    Key files:
+   credits will expire in 3 months, and can be redeemed once per v0 account.
 
-    API server: api/src/index.js
-    API auth middleware: api/src/middleware/auth.js
-    Supabase SQL schema: supabase/schema.sql
-    Dashboard app: dashboard/src/App.jsx
-    Chart component: dashboard/src/components/ActivityChart.jsx
-    Feed component: dashboard/src/components/EventFeed.jsx
-    Dashboard styling: dashboard/src/styles.css
-    Setup/run instructions: README.md
-    What’s included:
+3. This week's class also includes a video on setting up the project using v0 as well as Codex.
+4. Set up a free Supabase account using Github.
+5. The Project is Flavio Copes AI Bootcamp Week 2 with a password using the alternate bar with 2 ending non-alphabetic characters.
+6. This is what the Codex generated:
 
-    POST /api/projects generates project + API key.
-    POST /api/events ingests events with x-api-key (or Bearer token).
-    Events stored in Supabase events table.
-    Dashboard:
-    reverse-chronological feed
-    filter by channel
-    search title/description/tags
-    14-day activity chart
-    realtime updates via Supabase postgres_changes
-    Validation:
+   ```text
+   Implemented a complete two-part app scaffold in your workspace:
 
-    API JS files pass node --check.
-    JSX validation/build was not run because dependencies are not installed yet.
-    Next steps:
+   Remote-ready Node/Express API with API key auth and Supabase storage.
+   Local React dashboard with realtime feed, channel filter, search, and activity chart.
+   Key files:
 
-    Run the SQL in Supabase: supabase/schema.sql
-    Configure envs from .env.example in api and dashboard.
-    Install and run:
-         cd api && npm install && npm run dev
-         cd dashboard && npm install && npm run dev
-         Deploy api to an always-on host (Render/Railway/Fly/ VPS), keep dashboard local.
+   API server: api/src/index.js
+   API auth middleware: api/src/middleware/auth.js
+   Supabase SQL schema: supabase/schema.sql
+   Dashboard app: dashboard/src/App.jsx
+   Chart component: dashboard/src/components/ActivityChart.jsx
+   Feed component: dashboard/src/components/EventFeed.jsx
+   Dashboard styling: dashboard/src/styles.css
+   Setup/run instructions: README.md
+   What’s included:
 
-     To run step 1:
+   POST /api/projects generates project + API key.
+   POST /api/events ingests events with x-api-key (or Bearer token).
+   Events stored in Supabase events table.
+   Dashboard:
+   reverse-chronological feed
+   filter by channel
+   search title/description/tags
+   14-day activity chart
+   realtime updates via Supabase postgres_changes
+   Validation:
 
-     Do exactly this:
+   API JS files pass node --check.
+   JSX validation/build was not run because dependencies are not installed yet.
+   Next steps:
 
-     Open your Supabase project in browser.
-     Left sidebar -> SQL Editor.
-     Click New query.
-     Open supabase/schema.sql, copy all SQL, paste into the query.
-     Click Run.
-     After it runs, verify:
+   Run the SQL in Supabase: supabase/schema.sql
+   Configure envs from .env.example in api and dashboard.
+   Install and run:
+        cd api && npm install && npm run dev
+        cd dashboard && npm install && npm run dev
+        Deploy api to an always-on host (Render/Railway/Fly/ VPS), keep dashboard local.
 
-     Table Editor shows public.projects and public.events.
-     In Database -> Replication (or Publications), events is in supabase_realtime.
-     No red SQL errors in the query result panel.
-     If you get an error, paste it here and I’ll give you the exact fix.
+    To run step 1:
 
-     To run step 2:
+    Do exactly this:
 
-     In api:
+    Open your Supabase project in browser.
+    Left sidebar -> SQL Editor.
+    Click New query.
+    Open supabase/schema.sql, copy all SQL, paste into the query.
+    Click Run.
+    After it runs, verify:
 
-     Copy api/.env.example to api/.env
-     Fill values:
-     SUPABASE_URL: from Supabase Settings -> API -> Project URL
-     SUPABASE_SERVICE_ROLE_KEY: from same page (service_role key, secret)
-     PORT=8080
-     CORS_ORIGINS=http://localhost:5173
-     In dashboard:
+    Table Editor shows public.projects and public.events.
+    In Database -> Replication (or Publications), events is in supabase_realtime.
+    No red SQL errors in the query result panel.
+    If you get an error, paste it here and I’ll give you the exact fix.
 
-     Copy dashboard/.env.example to dashboard/.env
-     Fill values:
-     VITE_SUPABASE_URL: same Project URL
-     VITE_SUPABASE_ANON_KEY: anon public key
-     VITE_PROJECT_ID: will come from calling POST /api/projects once API is running
-     Important:
+    To run step 2:
 
-     Never expose SUPABASE_SERVICE_ROLE_KEY in frontend code.
-     api/.env and dashboard/.env stay local and should not be committed.
+    In api:
 
-    ```
+    Copy api/.env.example to api/.env
+    Fill values:
+    SUPABASE_URL: from Supabase Settings -> API -> Project URL
+    SUPABASE_SERVICE_ROLE_KEY: from same page (service_role key, secret)
+    PORT=8080
+    CORS_ORIGINS=http://localhost:5173
+    In dashboard:
 
-    I had ChatGPT run step 2 and then additionally clarify the keys:
-    api/.env -> your Supabase secret key
-    dashboard/.env -> your Supabase publishable key
+    Copy dashboard/.env.example to dashboard/.env
+    Fill values:
+    VITE_SUPABASE_URL: same Project URL
+    VITE_SUPABASE_ANON_KEY: anon public key
+    VITE_PROJECT_ID: will come from calling POST /api/projects once API is running
+    Important:
 
-    And then since the dashboard is local:
-    Then run:
+    Never expose SUPABASE_SERVICE_ROLE_KEY in frontend code.
+    api/.env and dashboard/.env stay local and should not be committed.
 
-    cd api && npm install && npm run dev
-    cd dashboard && npm install && npm run dev
+   ```
+
+   I had ChatGPT run step 2 and then additionally clarify the keys:
+   api/.env -> your Supabase secret key
+   dashboard/.env -> your Supabase publishable key
+
+   And then since the dashboard is local:
+   Then run:
+
+   cd api && npm install && npm run dev
+   cd dashboard && npm install && npm run dev
 
 7. Since I was confused about what this project was supposed to do, I initially had an error and need to run this (as instructed by AI) to fix an error:
 
-    ````bash
+   ```bash
 
-        curl -X POST http://localhost:8080/api/projects \
+       curl -X POST http://localhost:8080/api/projects \
 
-        -H 'content-type: application/json' \
-        -d '{"name":"My Monitoring Project"}'
-        {"project":{"id":"d9e6a038-7991-4a13-820b-20a01c5a3e8b","name":"My Monitoring Project","created*at":"2026-03-07T01:04:35.293425+00:00"},"apiKey":"evt*<PROJECT_API_KEY_1>"}
+       -H 'content-type: application/json' \
+       -d '{"name":"My Monitoring Project"}'
+       {"project":{"id":"d9e6a038-7991-4a13-820b-20a01c5a3e8b","name":"My Monitoring Project","created*at":"2026-03-07T01:04:35.293425+00:00"},"apiKey":"evt*<PROJECT_API_KEY_1>"}
 
-    ````
+   ```
 
 8. I asked the AI to fix this and it added this as per my instructions:
 
-    ```text
-    Implemented. The dashboard now has the project onboarding flow you described.
+   ```text
+   Implemented. The dashboard now has the project onboarding flow you described.
 
-    What changed:
+   What changed:
 
-    Added top bar with page title Events Dashboard, project dropdown, and + button.
-    Added welcome state:
-        Welcome to Events Dashboard
-    instruction to select or create a project
-    Added + modal:
-    fields for Project Name, optional Project ID, optional API Key
-    if ID+API key are provided, it saves an existing project locally
-    if left blank, it calls POST /api/projects and creates one via API
-    After selecting/creating a project, it transitions to the live dashboard UI.
-    New project API key is shown once so you can save it.
-    Saved projects persist in browser local storage.
+   Added top bar with page title Events Dashboard, project dropdown, and + button.
+   Added welcome state:
+       Welcome to Events Dashboard
+   instruction to select or create a project
+   Added + modal:
+   fields for Project Name, optional Project ID, optional API Key
+   if ID+API key are provided, it saves an existing project locally
+   if left blank, it calls POST /api/projects and creates one via API
+   After selecting/creating a project, it transitions to the live dashboard UI.
+   New project API key is shown once so you can save it.
+   Saved projects persist in browser local storage.
 
-    I also updated your local env to include API base URL and cleaned project ID formatting:
+   I also updated your local env to include API base URL and cleaned project ID formatting:
 
-        dashboard/.env
-    ```
+       dashboard/.env
+   ```
 
 9. I didn't see the main dashboard page so I needed to essentially a new project setup - e.g. clear any project data that was there. ChatGPT indicated that I did NOT need to refresh the database, but instead:
 
@@ -255,14 +267,23 @@ evt\_<PROJECT_API_KEY_2>
         2.  branch -M master
         3.  This last one didn't work: push -u origin master
     4.  Then, when you start using git to send changes, it works with the online repo.
-13. Test: curl https://flaviocopesai-week2.onrender.com/health
+
+13. Test - NOTE: I changed the project name in Render to "Flavio Copes AI Bootcamp" so the deploy may not be the same. You can only have 1 project in the free tier.
+
+    ```bash
+    curl https://flaviocopesai-week2.onrender.com/health
+    ```
+
 14. To add a new event to a given project:
+
+    ```bash
     curl -X POST https://flaviocopesai-week2.onrender.com/api/events \
     -H 'content-type: application/json' \
     -H 'x-api-key: evt\_<PROJECT_API_KEY_2>' \
     -d '{"channel":"deploys","title":"Manual test event","description":"Sent via curl to Render API","emoji":"🧪","tags":["manual","render-test"]}'
+    ```
 
-15. To test the script used for pinging weather:
+15. To test the script used for pinging weather - see change to deployment URL above - changed the project name in Render....
     OPENWEATHER*API_KEY=<OPENWEATHER_API_KEY> \
     WEATHER_LAT=37.7749 \
     WEATHER_LON=-122.4194 \
@@ -375,6 +396,55 @@ Confirm event appears in dashboard feed
     If you had old projects, backfill owner_user_id once (README includes SQL).
 
     Redeploy backend on Render (so new auth requirement for POST /api/projects is live).
-    
+
     Restart local dashboard.
     If you want, I can give you the exact SQL to backfill ownership for the user currently logged in (using their auth UUID).
+
+## Issue with resuming the project
+
+I had resumed the cron job which is "San Francisco Weather", but not the backend service which is "FlavioCopesAI-Week2".
+
+Response from the Agent:
+
+This one is clear from the log: the cron job itself is running, but the URL in EVENTS_API_BASE_URL is returning Render’s Service Suspended page.
+
+The important line is:
+
+Error: Events API failed: 503 ... <title>Service Suspended</title>
+So the failure is not in push-weather-event.mjs. It means the cron job successfully called your weather API, then tried to post to your Events API, but that Render service is currently suspended.
+
+What to check:
+
+In Render, open the web service used for your API.
+Make sure it is active, not suspended.
+If it was on the free tier, Render may have suspended it.
+Verify EVENTS_API_BASE_URL in the cron job.
+It should point to the currently active API service URL.
+If you renamed or recreated the Render service, the cron job may still be using the old URL.
+Test the API URL directly in a browser or terminal:
+curl https://your-api-service.onrender.com/health
+If that returns the suspended HTML or a 503, the cron job is correct and the API service is the issue.
+If /health works, then the cron job env var is probably pointing at the wrong service URL.
+Most likely fix:
+
+Update EVENTS_API_BASE_URL in the Render cron job to the active API service URL.
+Or unsuspend/redeploy the API service if it’s the right URL but currently suspended.
+If you want, paste the current EVENTS_API_BASE_URL value and the current Render API service URL, and I’ll compare them with you.
+
+So the problem was that I had only resumed the cron job, NOT the service.
+
+## Problem with 2 Browsers
+
+We didn’t need a table change after all. The project metadata was already in Supabase; the real issue was that the dashboard was using browser localStorage as the project source. I changed that so the dashboard now loads the project list from Supabase and only keeps per-browser secrets like apiKey in local storage.
+
+That means Safari should now see the same projects as Chrome as soon as you log into the same account, because the list comes from the projects table. I also added a migration path for your old Chrome storage: the app reads the legacy events-dashboard-projects-v1, extracts any saved API keys, and stores them in a new per-browser secret cache. So your Chrome setup should keep working, and Safari should at least see the projects even if it doesn’t yet have the local API keys for delete actions.
+
+I updated App.jsx and verified it with a dashboard build. One important limitation remains: full API keys still cannot be synced from Chrome to Supabase, because the database intentionally stores only hashed keys. So cross-browser project visibility now works, but actions that require the raw evt\_... key, like project deletion or event deletion, will still need that key entered once in each browser if it isn’t already cached there.
+
+Next step is simple: restart the dashboard dev server in Chrome and Safari, log into the same account in both, and Safari should now load the project list from Supabase. If you want, I can take one more pass and add a small “Connect API key” button next to projects that are visible but missing a local key.
+
+### Important
+
+With new button for "Connect API Key":
+
+One important follow-up: because I added GET /api/projects/:id/verify, you’ll want to redeploy the backend so Safari can use the new verification step.

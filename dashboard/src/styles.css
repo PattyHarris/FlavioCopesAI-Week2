@@ -414,6 +414,12 @@ p {
   word-break: break-all;
 }
 
+.project-missing-key {
+  margin-top: 6px;
+  font-size: 0.78rem;
+  color: #7f1d1d;
+}
+
 .key-modal code {
   display: block;
   font-family: 'IBM Plex Mono', monospace;

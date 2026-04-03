@@ -126,6 +126,21 @@ app.get('/api/events/recent', authenticateApiKey, async (req, res) => {
   res.json({ events: data });
 });
 
+app.get('/api/projects/:id/verify', authenticateApiKey, async (req, res) => {
+  const projectId = req.params.id;
+  if (projectId !== req.project.id) {
+    return res.status(403).json({ error: 'API key does not match this project' });
+  }
+
+  return res.json({
+    ok: true,
+    project: {
+      id: req.project.id,
+      name: req.project.name
+    }
+  });
+});
+
 app.delete('/api/events/:id', authenticateApiKey, async (req, res) => {
   const eventId = Number.parseInt(req.params.id, 10);
   if (!Number.isInteger(eventId)) {

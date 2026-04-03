@@ -4,7 +4,8 @@ import EventFeed from './components/EventFeed.jsx';
 import InsightsPanel from './components/InsightsPanel.jsx';
 import { apiBaseUrl, hasSupabaseConfig, initialProjectId, supabase } from './supabase.js';
 
-const STORAGE_KEY = 'events-dashboard-projects-v1';
+const LEGACY_STORAGE_KEY = 'events-dashboard-projects-v1';
+const PROJECT_SECRET_STORAGE_KEY = 'events-dashboard-project-secrets-v1';
 
 function isUuid(value) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value || '');
@@ -17,20 +18,53 @@ function matchesSearch(event, query) {
   return haystack.includes(q);
 }
 
-function loadStoredProjects() {
+function loadStoredProjectSecrets() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter((project) => isUuid(project.id) && project.name);
+    const raw = localStorage.getItem(PROJECT_SECRET_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return Object.fromEntries(
+          Object.entries(parsed).filter(([projectId, apiKey]) => isUuid(projectId) && typeof apiKey === 'string' && apiKey)
+        );
+      }
+    }
+
+    const legacyRaw = localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (!legacyRaw) return {};
+    const parsed = JSON.parse(legacyRaw);
+    if (!Array.isArray(parsed)) return {};
+    return Object.fromEntries(
+      parsed
+        .filter((project) => isUuid(project.id) && typeof project.apiKey === 'string' && project.apiKey)
+        .map((project) => [project.id, project.apiKey])
+    );
   } catch {
-    return [];
+    return {};
   }
 }
 
-function saveStoredProjects(projects) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+function saveStoredProjectSecrets(projectSecrets) {
+  localStorage.setItem(PROJECT_SECRET_STORAGE_KEY, JSON.stringify(projectSecrets));
+}
+
+function mergeProjectsWithSecrets(projects, projectSecrets) {
+  return projects.map((project) => ({
+    ...project,
+    apiKey: projectSecrets[project.id] || ''
+  }));
+}
+
+function loadLegacyProjectIds() {
+  try {
+    const raw = localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((project) => isUuid(project.id));
+  } catch {
+    return [];
+  }
 }
 
 function TrashIcon() {
@@ -64,9 +98,10 @@ export default function App() {
   const [search, setSearch] = useState('');
   const [error, setError] = useState('');
 
-  const [projects, setProjects] = useState(() => loadStoredProjects());
+  const [projectSecrets, setProjectSecrets] = useState(() => loadStoredProjectSecrets());
+  const [projects, setProjects] = useState([]);
   const [selectedProjectId, setSelectedProjectId] = useState(() => {
-    const stored = loadStoredProjects();
+    const stored = loadLegacyProjectIds();
     if (isUuid(initialProjectId)) return initialProjectId;
     return stored[0]?.id || '';
   });
@@ -83,6 +118,9 @@ export default function App() {
   const [deletingEventIds, setDeletingEventIds] = useState(() => new Set());
   const [projectToDelete, setProjectToDelete] = useState(null);
   const [deletingProject, setDeletingProject] = useState(false);
+  const [projectToConnect, setProjectToConnect] = useState(null);
+  const [connectApiKeyInput, setConnectApiKeyInput] = useState('');
+  const [connectingApiKey, setConnectingApiKey] = useState(false);
 
   const selectedProject = useMemo(
     () => projects.find((project) => project.id === selectedProjectId) || null,
@@ -90,8 +128,8 @@ export default function App() {
   );
 
   useEffect(() => {
-    saveStoredProjects(projects);
-  }, [projects]);
+    saveStoredProjectSecrets(projectSecrets);
+  }, [projectSecrets]);
 
   useEffect(() => {
     if (!hasSupabaseConfig) {
@@ -124,6 +162,38 @@ export default function App() {
       listener.subscription.unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    if (!session) {
+      setProjects([]);
+      return;
+    }
+
+    let mounted = true;
+
+    async function loadProjects() {
+      const { data, error: projectsError } = await supabase
+        .from('projects')
+        .select('id, name, created_at, api_key_last4')
+        .order('created_at', { ascending: false });
+
+      if (!mounted) return;
+
+      if (projectsError) {
+        setError(projectsError.message);
+        setProjects([]);
+        return;
+      }
+
+      setProjects(mergeProjectsWithSecrets(data || [], projectSecrets));
+    }
+
+    loadProjects();
+
+    return () => {
+      mounted = false;
+    };
+  }, [session, projectSecrets]);
 
   useEffect(() => {
     if (!session) return;
@@ -197,15 +267,35 @@ export default function App() {
 
     try {
       if (isUuid(projectIdInput.trim()) && apiKeyInput.trim()) {
-        const existing = {
-          id: projectIdInput.trim(),
-          name: projectNameInput.trim(),
-          apiKey: apiKeyInput.trim()
-        };
+        const existingProjectId = projectIdInput.trim();
+        const existingApiKey = apiKeyInput.trim();
 
-        const deduped = [existing, ...projects.filter((project) => project.id !== existing.id)];
-        setProjects(deduped);
-        setSelectedProjectId(existing.id);
+        const { data: existingProject, error: existingProjectError } = await supabase
+          .from('projects')
+          .select('id, name, created_at, api_key_last4')
+          .eq('id', existingProjectId)
+          .maybeSingle();
+
+        if (existingProjectError) {
+          throw new Error(existingProjectError.message || 'Failed to load project');
+        }
+
+        if (!existingProject) {
+          throw new Error('Project not found or not accessible for this account.');
+        }
+
+        setProjectSecrets((prev) => ({
+          ...prev,
+          [existingProjectId]: existingApiKey
+        }));
+        setProjects((prev) => mergeProjectsWithSecrets(
+          [existingProject, ...prev.filter((project) => project.id !== existingProject.id)],
+          {
+            ...projectSecrets,
+            [existingProjectId]: existingApiKey
+          }
+        ));
+        setSelectedProjectId(existingProject.id);
         setCreatedApiKey('');
       } else {
         const response = await fetch(`${apiBaseUrl}/api/projects`, {
@@ -226,10 +316,23 @@ export default function App() {
         const created = {
           id: payload.project.id,
           name: payload.project.name,
+          api_key_last4: payload.apiKey.slice(-4),
+          created_at: payload.project.created_at,
           apiKey: payload.apiKey
         };
 
-        const deduped = [created, ...projects.filter((project) => project.id !== created.id)];
+        setProjectSecrets((prev) => ({
+          ...prev,
+          [created.id]: created.apiKey
+        }));
+        const nextSecrets = {
+          ...projectSecrets,
+          [created.id]: created.apiKey
+        };
+        const deduped = mergeProjectsWithSecrets(
+          [created, ...projects.filter((project) => project.id !== created.id)],
+          nextSecrets
+        );
         setProjects(deduped);
         setSelectedProjectId(created.id);
         setCreatedApiKey(created.apiKey || '');
@@ -350,6 +453,52 @@ export default function App() {
     setProjectToDelete(project);
   }
 
+  function requestConnectProject(project) {
+    setError('');
+    setProjectToConnect(project);
+    setConnectApiKeyInput('');
+  }
+
+  async function handleConfirmConnectProject(event) {
+    event.preventDefault();
+    if (!projectToConnect) return;
+    if (!connectApiKeyInput.trim()) {
+      setError('API key is required.');
+      return;
+    }
+
+    setConnectingApiKey(true);
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/projects/${projectToConnect.id}/verify`, {
+        method: 'GET',
+        headers: {
+          'x-api-key': connectApiKeyInput.trim()
+        }
+      });
+
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(payload.error || 'Failed to verify API key');
+      }
+
+      const nextSecrets = {
+        ...projectSecrets,
+        [projectToConnect.id]: connectApiKeyInput.trim()
+      };
+
+      setProjectSecrets(nextSecrets);
+      setProjects((prev) => mergeProjectsWithSecrets(prev, nextSecrets));
+      setProjectToConnect(null);
+      setConnectApiKeyInput('');
+    } catch (connectError) {
+      setError(connectError.message || 'Failed to connect API key.');
+    } finally {
+      setConnectingApiKey(false);
+    }
+  }
+
   async function handleConfirmDeleteProject() {
     if (!projectToDelete) return;
     if (!projectToDelete.apiKey) {
@@ -374,6 +523,11 @@ export default function App() {
       }
 
       setProjects((prev) => prev.filter((project) => project.id !== projectToDelete.id));
+      setProjectSecrets((prev) => {
+        const next = { ...prev };
+        delete next[projectToDelete.id];
+        return next;
+      });
       if (selectedProjectId === projectToDelete.id) {
         resetToHome();
       }
@@ -496,9 +650,15 @@ export default function App() {
                   <div>
                     <strong>{project.name}</strong>
                     <div className="muted">{project.id}</div>
+                    {!project.apiKey ? <div className="project-missing-key">This browser does not have the API key yet.</div> : null}
                   </div>
                   <div className="project-actions">
                     <button type="button" onClick={() => setSelectedProjectId(project.id)}>Open</button>
+                    {!project.apiKey ? (
+                      <button type="button" className="ghost-btn" onClick={() => requestConnectProject(project)}>
+                        Connect API Key
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       className="icon-btn danger"
@@ -519,6 +679,11 @@ export default function App() {
           <section className="hero">
             <div className="title-with-actions">
               <h2>{selectedProject?.name || 'Live Events'}</h2>
+              {!selectedProject?.apiKey && selectedProject ? (
+                <button type="button" className="ghost-btn" onClick={() => requestConnectProject(selectedProject)}>
+                  Connect API Key
+                </button>
+              ) : null}
               <button
                 type="button"
                 className="icon-btn danger"
@@ -638,6 +803,33 @@ export default function App() {
                 {deletingProject ? 'Deleting...' : 'Delete'}
               </button>
             </div>
+          </section>
+        </div>
+      ) : null}
+      {projectToConnect ? (
+        <div className="modal-overlay" onClick={() => setProjectToConnect(null)}>
+          <section className="panel modal confirm-modal" onClick={(event) => event.stopPropagation()}>
+            <h3>Connect API Key</h3>
+            <p>Enter the API key for {projectToConnect.name} so this browser can perform project actions.</p>
+            <form className="auth-form" onSubmit={handleConfirmConnectProject}>
+              <label>
+                API Key
+                <input
+                  type="password"
+                  value={connectApiKeyInput}
+                  onChange={(event) => setConnectApiKeyInput(event.target.value)}
+                  placeholder="evt_..."
+                  autoComplete="off"
+                  required
+                />
+              </label>
+              <div className="modal-actions">
+                <button type="button" onClick={() => setProjectToConnect(null)}>Cancel</button>
+                <button type="submit" disabled={connectingApiKey}>
+                  {connectingApiKey ? 'Verifying...' : 'Connect'}
+                </button>
+              </div>
+            </form>
           </section>
         </div>
       ) : null}
