@@ -494,3 +494,13 @@ The backend now has POST /api/projects/:id/rotate-key, authenticated with the cu
 The main code changes are in api/src/index.js and dashboard/src/App.jsx. I verified the API with node --check and the dashboard with a full production build.
 
 To use it, redeploy the backend first so the new rotate endpoint is live. After that, click Rotate API Key for the affected project, then update anything still using the old key, like import-events.sh, Render cron job env vars, or other event senders.
+
+### Testing
+
+Using SAAS, rotated the key and then using the given script (see instructions above), used the new key to re-add the data - it is added locally, but is accessible remotely (?).
+
+Then, from Safari, use the "connect" api key to connect to the SAAS project.
+
+Have not tested with the Weather service - here, I will need to fix the keys in the cron job - see the Environment menu for updating the keys there.
+
+Will go back to Week6 first and then return here to test.
