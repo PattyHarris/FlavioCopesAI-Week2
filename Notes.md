@@ -448,3 +448,49 @@ Next step is simple: restart the dashboard dev server in Chrome and Safari, log 
 With new button for "Connect API Key":
 
 One important follow-up: because I added GET /api/projects/:id/verify, you’ll want to redeploy the backend so Safari can use the new verification step.
+
+## Rotation of Keys
+
+A Rotate API Key feature would let you keep the same project and same event history, but replace the old evt\_... key with a new one.
+
+How it would work:
+
+1. You click Rotate API Key for a project.
+2. The app calls a backend endpoint like:
+   POST /api/projects/:id/rotate-key
+3. The backend verifies you’re authorized for that project.
+4. It generates a new raw evt\_... key.
+5. It stores only the new hash in projects.api_key_hash and updates api_key_last4.
+6. It returns the new raw key one time to the UI.
+7. Old key immediately stops working.
+8. New key is used going forward for:
+   - import-events.sh
+   - cron jobs
+   - any external app posting events
+
+Why it’s better than deleting/recreating:
+
+- same project.id
+- same event history
+- no need to migrate or lose data
+- safer operationally
+
+Tradeoff:
+
+every external sender using the old key must be updated
+
+If you want, I can implement this next with:
+
+- backend rotate endpoint
+- UI button + confirmation modal
+- one-time “new API key” display just like project creation
+
+### Implementation
+
+Implemented. You can now rotate a project API key without deleting the project or losing its event history.
+
+The backend now has POST /api/projects/:id/rotate-key, authenticated with the current project key, and the dashboard has Rotate API Key actions on both the main project list and the project header. When you rotate, the old key is invalidated immediately and the new one-time key is shown in the same modal used for project creation, with updated messaging so it’s clear that scripts, cron jobs, and external senders need to be updated. I also documented the new flow in README.md.
+
+The main code changes are in api/src/index.js and dashboard/src/App.jsx. I verified the API with node --check and the dashboard with a full production build.
+
+To use it, redeploy the backend first so the new rotate endpoint is live. After that, click Rotate API Key for the affected project, then update anything still using the old key, like import-events.sh, Render cron job env vars, or other event senders.

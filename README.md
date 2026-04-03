@@ -55,6 +55,9 @@ Required env:
 ```
 
 - `GET /api/events/recent` (authenticated)
+- `POST /api/projects/:id/rotate-key` (authenticated with the current project API key)
+  - Header: `x-api-key: <current key>`
+  - Returns a one-time replacement `apiKey`
 
 ### Create project + key
 
@@ -104,6 +107,7 @@ Project flow in the dashboard UI:
 - Use the top-right `+` button to create a project (API call to `/api/projects`) or add an existing one.
 - Use the project dropdown (left of `+`) to switch between saved projects.
 - After creating a project, an API key modal appears with a copy button. Save the key immediately.
+- Use `Rotate API Key` if you lose a project key but want to keep the same project and event history.
 - The dashboard stores created/added projects in local browser storage.
 - Dashboard access now requires Supabase Auth sign-in.
 

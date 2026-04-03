@@ -141,6 +141,36 @@ app.get('/api/projects/:id/verify', authenticateApiKey, async (req, res) => {
   });
 });
 
+app.post('/api/projects/:id/rotate-key', authenticateApiKey, async (req, res) => {
+  const projectId = req.params.id;
+  if (projectId !== req.project.id) {
+    return res.status(403).json({ error: 'Not authorized to rotate this project key' });
+  }
+
+  const rawKey = `evt_${crypto.randomBytes(24).toString('hex')}`;
+  const apiKeyHash = crypto.createHash('sha256').update(rawKey).digest('hex');
+
+  const { data, error } = await supabase
+    .from('projects')
+    .update({
+      api_key_hash: apiKeyHash,
+      api_key_last4: rawKey.slice(-4)
+    })
+    .eq('id', projectId)
+    .select('id, name, created_at, api_key_last4')
+    .single();
+
+  if (error) {
+    return res.status(500).json({ error: 'Failed to rotate API key', details: error.message });
+  }
+
+  return res.json({
+    ok: true,
+    project: data,
+    apiKey: rawKey
+  });
+});
+
 app.delete('/api/events/:id', authenticateApiKey, async (req, res) => {
   const eventId = Number.parseInt(req.params.id, 10);
   if (!Number.isInteger(eventId)) {

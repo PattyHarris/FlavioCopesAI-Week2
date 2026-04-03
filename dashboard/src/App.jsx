@@ -114,6 +114,8 @@ export default function App() {
   const [createdApiKey, setCreatedApiKey] = useState('');
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [copiedApiKey, setCopiedApiKey] = useState(false);
+  const [apiKeyModalTitle, setApiKeyModalTitle] = useState('API Key Created');
+  const [apiKeyModalMessage, setApiKeyModalMessage] = useState('Save this key now. You will not be able to view it again.');
 
   const [deletingEventIds, setDeletingEventIds] = useState(() => new Set());
   const [projectToDelete, setProjectToDelete] = useState(null);
@@ -121,6 +123,8 @@ export default function App() {
   const [projectToConnect, setProjectToConnect] = useState(null);
   const [connectApiKeyInput, setConnectApiKeyInput] = useState('');
   const [connectingApiKey, setConnectingApiKey] = useState(false);
+  const [projectToRotate, setProjectToRotate] = useState(null);
+  const [rotatingProjectKey, setRotatingProjectKey] = useState(false);
 
   const selectedProject = useMemo(
     () => projects.find((project) => project.id === selectedProjectId) || null,
@@ -336,6 +340,8 @@ export default function App() {
         setProjects(deduped);
         setSelectedProjectId(created.id);
         setCreatedApiKey(created.apiKey || '');
+        setApiKeyModalTitle('API Key Created');
+        setApiKeyModalMessage('Save this key now. You will not be able to view it again.');
         setShowApiKeyModal(Boolean(created.apiKey));
         setCopiedApiKey(false);
       }
@@ -453,6 +459,11 @@ export default function App() {
     setProjectToDelete(project);
   }
 
+  function requestRotateProjectKey(project) {
+    setError('');
+    setProjectToRotate(project);
+  }
+
   function requestConnectProject(project) {
     setError('');
     setProjectToConnect(project);
@@ -537,6 +548,58 @@ export default function App() {
       setProjectToDelete(null);
     } finally {
       setDeletingProject(false);
+    }
+  }
+
+  async function handleConfirmRotateProjectKey() {
+    if (!projectToRotate) return;
+    if (!projectToRotate.apiKey) {
+      setError('Missing API key for this project. Connect the API key before rotating it.');
+      setProjectToRotate(null);
+      return;
+    }
+
+    setRotatingProjectKey(true);
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/projects/${projectToRotate.id}/rotate-key`, {
+        method: 'POST',
+        headers: {
+          'x-api-key': projectToRotate.apiKey
+        }
+      });
+
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(payload.error || 'Failed to rotate API key');
+      }
+
+      const nextSecrets = {
+        ...projectSecrets,
+        [projectToRotate.id]: payload.apiKey
+      };
+
+      setProjectSecrets(nextSecrets);
+      setProjects((prev) => mergeProjectsWithSecrets(
+        prev.map((project) => (
+          project.id === projectToRotate.id
+            ? { ...project, api_key_last4: payload.project.api_key_last4 }
+            : project
+        )),
+        nextSecrets
+      ));
+      setCreatedApiKey(payload.apiKey || '');
+      setApiKeyModalTitle('API Key Rotated');
+      setApiKeyModalMessage('Your old key no longer works. Update scripts, cron jobs, and external senders with this new key now.');
+      setShowApiKeyModal(Boolean(payload.apiKey));
+      setCopiedApiKey(false);
+      setProjectToRotate(null);
+    } catch (rotateError) {
+      setError(rotateError.message || 'Failed to rotate API key.');
+      setProjectToRotate(null);
+    } finally {
+      setRotatingProjectKey(false);
     }
   }
 
@@ -659,6 +722,11 @@ export default function App() {
                         Connect API Key
                       </button>
                     ) : null}
+                    {project.apiKey ? (
+                      <button type="button" className="ghost-btn" onClick={() => requestRotateProjectKey(project)}>
+                        Rotate API Key
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       className="icon-btn danger"
@@ -682,6 +750,11 @@ export default function App() {
               {!selectedProject?.apiKey && selectedProject ? (
                 <button type="button" className="ghost-btn" onClick={() => requestConnectProject(selectedProject)}>
                   Connect API Key
+                </button>
+              ) : null}
+              {selectedProject?.apiKey ? (
+                <button type="button" className="ghost-btn" onClick={() => requestRotateProjectKey(selectedProject)}>
+                  Rotate API Key
                 </button>
               ) : null}
               <button
@@ -779,8 +852,8 @@ export default function App() {
       {showApiKeyModal ? (
         <div className="modal-overlay" onClick={() => setShowApiKeyModal(false)}>
           <section className="panel modal key-modal" onClick={(event) => event.stopPropagation()}>
-            <h3>API Key Created</h3>
-            <p>Save this key now. You will not be able to view it again.</p>
+            <h3>{apiKeyModalTitle}</h3>
+            <p>{apiKeyModalMessage}</p>
             <code>{createdApiKey}</code>
             <div className="modal-actions">
               <button type="button" onClick={handleCopyApiKey}>
@@ -830,6 +903,20 @@ export default function App() {
                 </button>
               </div>
             </form>
+          </section>
+        </div>
+      ) : null}
+      {projectToRotate ? (
+        <div className="modal-overlay" onClick={() => setProjectToRotate(null)}>
+          <section className="panel modal confirm-modal" onClick={(event) => event.stopPropagation()}>
+            <h3>Rotate API Key?</h3>
+            <p>This will immediately invalidate the current key for {projectToRotate.name}.</p>
+            <div className="modal-actions">
+              <button type="button" onClick={() => setProjectToRotate(null)}>Cancel</button>
+              <button type="button" onClick={handleConfirmRotateProjectKey} disabled={rotatingProjectKey}>
+                {rotatingProjectKey ? 'Rotating...' : 'Rotate'}
+              </button>
+            </div>
           </section>
         </div>
       ) : null}
