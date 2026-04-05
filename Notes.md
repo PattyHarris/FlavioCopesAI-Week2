@@ -504,3 +504,7 @@ Then, from Safari, use the "connect" api key to connect to the SAAS project.
 Have not tested with the Weather service - here, I will need to fix the keys in the cron job - see the Environment menu for updating the keys there.
 
 Will go back to Week6 first and then return here to test.
+
+Testing is now successful for "Connect" and "Rotate". When changing the API key, remember to update the key for the San Francisco Weather service cron job. More clearly, if the key is rotated in one instance, e.g. on Chrome, then (1) update the cron job API key and (2) use the "connect" button to update the other instance to the new key (e.g. on Safari).
+
+The last fix checked for "stale" keys to change the "Rotate" button to a "Connect" button.
