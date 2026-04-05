@@ -51,7 +51,10 @@ function saveStoredProjectSecrets(projectSecrets) {
 function mergeProjectsWithSecrets(projects, projectSecrets) {
   return projects.map((project) => ({
     ...project,
-    apiKey: projectSecrets[project.id] || ''
+    apiKey: projectSecrets[project.id] || '',
+    hasUsableApiKey: Boolean(projectSecrets[project.id]) && (
+      !project.api_key_last4 || projectSecrets[project.id].slice(-4) === project.api_key_last4
+    )
   }));
 }
 
@@ -419,8 +422,8 @@ export default function App() {
   }
 
   async function handleDeleteEvent(event) {
-    if (!selectedProject?.apiKey) {
-      setError('Missing API key for this project. Re-add the project with its API key to delete events.');
+    if (!selectedProject?.hasUsableApiKey) {
+      setError('This browser does not have the current API key for this project. Connect the latest API key first.');
       return;
     }
 
@@ -512,8 +515,8 @@ export default function App() {
 
   async function handleConfirmDeleteProject() {
     if (!projectToDelete) return;
-    if (!projectToDelete.apiKey) {
-      setError('Missing API key for this project. Re-add the project with its API key to delete it.');
+    if (!projectToDelete.hasUsableApiKey) {
+      setError('This browser does not have the current API key for this project. Connect the latest API key first.');
       setProjectToDelete(null);
       return;
     }
@@ -553,8 +556,8 @@ export default function App() {
 
   async function handleConfirmRotateProjectKey() {
     if (!projectToRotate) return;
-    if (!projectToRotate.apiKey) {
-      setError('Missing API key for this project. Connect the API key before rotating it.');
+    if (!projectToRotate.hasUsableApiKey) {
+      setError('This browser does not have the current API key for this project. Connect the latest API key before rotating it.');
       setProjectToRotate(null);
       return;
     }
@@ -714,15 +717,16 @@ export default function App() {
                     <strong>{project.name}</strong>
                     <div className="muted">{project.id}</div>
                     {!project.apiKey ? <div className="project-missing-key">This browser does not have the API key yet.</div> : null}
+                    {project.apiKey && !project.hasUsableApiKey ? <div className="project-missing-key">The saved API key in this browser is out of date.</div> : null}
                   </div>
                   <div className="project-actions">
                     <button type="button" onClick={() => setSelectedProjectId(project.id)}>Open</button>
-                    {!project.apiKey ? (
+                    {!project.hasUsableApiKey ? (
                       <button type="button" className="ghost-btn" onClick={() => requestConnectProject(project)}>
                         Connect API Key
                       </button>
                     ) : null}
-                    {project.apiKey ? (
+                    {project.hasUsableApiKey ? (
                       <button type="button" className="ghost-btn" onClick={() => requestRotateProjectKey(project)}>
                         Rotate API Key
                       </button>
@@ -732,7 +736,7 @@ export default function App() {
                       className="icon-btn danger"
                       onClick={() => requestDeleteProject(project)}
                       aria-label="Delete project"
-                      disabled={!project.apiKey}
+                      disabled={!project.hasUsableApiKey}
                     >
                       <TrashIcon />
                     </button>
@@ -747,12 +751,12 @@ export default function App() {
           <section className="hero">
             <div className="title-with-actions">
               <h2>{selectedProject?.name || 'Live Events'}</h2>
-              {!selectedProject?.apiKey && selectedProject ? (
+              {!selectedProject?.hasUsableApiKey && selectedProject ? (
                 <button type="button" className="ghost-btn" onClick={() => requestConnectProject(selectedProject)}>
                   Connect API Key
                 </button>
               ) : null}
-              {selectedProject?.apiKey ? (
+              {selectedProject?.hasUsableApiKey ? (
                 <button type="button" className="ghost-btn" onClick={() => requestRotateProjectKey(selectedProject)}>
                   Rotate API Key
                 </button>
@@ -762,7 +766,7 @@ export default function App() {
                 className="icon-btn danger"
                 onClick={() => selectedProject && requestDeleteProject(selectedProject)}
                 aria-label="Delete project"
-                disabled={!selectedProject?.apiKey}
+                disabled={!selectedProject?.hasUsableApiKey}
               >
                 <TrashIcon />
               </button>
